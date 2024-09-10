@@ -153,6 +153,8 @@ const AllocatedCertificateEmployeePage = () => {
       selectedCertificate?.administratorSignature,
     ]?.filter((item) => !!item);
 
+    console.log("imagesimages", images);
+    
     try {
       Promise.all(images.map((url) => loadImage(url as string)));
       if (captureRef.current) {
