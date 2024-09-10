@@ -23,8 +23,9 @@ export const Uploads3imagesBase64 = async (base64Image: string) => {
         };
 
         const command = new PutObjectCommand(params);
-
+        
         const data = await s3Client.send(command);
+        console.log("command++++", command, data, base64Data);
         if (data) {
             const objectUrl = `https://${import.meta.env.VITE_BUCKETNAME}.s3.amazonaws.com/${key}`;
             return {
