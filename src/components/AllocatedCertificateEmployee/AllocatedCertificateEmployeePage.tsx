@@ -158,7 +158,7 @@ const AllocatedCertificateEmployeePage = () => {
       await Promise.all(images.map((url) => loadImage(url as string)));
       if (captureRef.current) {
         html2canvas(captureRef.current, {
-          useCORS: true,
+          useCORS: false,
           allowTaint: false,
           logging: true,
         })
