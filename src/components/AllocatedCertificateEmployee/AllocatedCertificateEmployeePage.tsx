@@ -165,6 +165,7 @@ const AllocatedCertificateEmployeePage = () => {
         })
           .then(async (canvas) => {
             const imgData = canvas.toDataURL("image/png");
+            console.log("imgDataimgData", imgData);
             if (imgData) {
               const result = await Uploads3imagesBase64(imgData);
               console.log("resultresult", result);
