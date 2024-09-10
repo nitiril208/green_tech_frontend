@@ -154,9 +154,8 @@ const AllocatedCertificateEmployeePage = () => {
     ]?.filter((item) => !!item);
 
     console.log("imagesimages", images);
-    
     try {
-      Promise.all(images.map((url) => loadImage(url as string)));
+      await Promise.all(images.map((url) => loadImage(url as string)));
       if (captureRef.current) {
         html2canvas(captureRef.current, {
           useCORS: true,
@@ -165,35 +164,32 @@ const AllocatedCertificateEmployeePage = () => {
         })
           .then(async (canvas) => {
             const imgData = canvas.toDataURL("image/png");
-            console.log("imgDataimgData", imgData);
+            console.log("Image Data URL:", imgData);
             if (imgData) {
-              const result = await Uploads3imagesBase64(imgData);
-              console.log("resultresult", result);
-              
-              return;
-              if (result.status === 200) {
-                const payload = {
-                  certificate: selectedCertificate?.id,
-                  user: userData?.query?.id,
-                  status: 1,
-                  course: selectCourseData?.currentVersion?.mainCourse?.id,
-                  trainee: selectCourseData?.trainerId?.id,
-                  trainerCompany: selectCourseData?.trainerCompanyId?.id,
-                  employee: +selectTrainee,
-                  certificatePdf: result?.data,
-                };
-                console.log(
-                  "🚀 ~ .then ~ payload.selectCourseData:",
-                  selectCourseData
-                );
-
-                allocate(payload);
-                
-              } else {
-                toast({
-                  description: `Upload failed: ${result.data}`,
-                  variant: "destructive",
-                });
+              try {
+                const result = await Uploads3imagesBase64(imgData);
+                console.log("Upload Result:", result);
+                if (result.status === 200) {
+                  const payload = {
+                    certificate: selectedCertificate?.id,
+                    user: userData?.query?.id,
+                    status: 1,
+                    course: selectCourseData?.currentVersion?.mainCourse?.id,
+                    trainee: selectCourseData?.trainerId?.id,
+                    trainerCompany: selectCourseData?.trainerCompanyId?.id,
+                    employee: +selectTrainee,
+                    certificatePdf: result?.data,
+                  };
+                  console.log(":rocket: Payload:", payload);
+                  allocate(payload);
+                } else {
+                  toast({
+                    description: `Upload failed: ${result.data}`,
+                    variant: "destructive",
+                  });
+                }
+              } catch (uploadError) {
+                console.error("Error uploading image:", uploadError);
               }
             }
           })
@@ -206,6 +202,57 @@ const AllocatedCertificateEmployeePage = () => {
     } finally {
       setLoading(false);
     }
+    // try {
+    //   Promise.all(images.map((url) => loadImage(url as string)));
+    //   if (captureRef.current) {
+    //     html2canvas(captureRef.current, {
+    //       useCORS: true,
+    //       allowTaint: false,
+    //       logging: true,
+    //     })
+    //       .then(async (canvas) => {
+    //         const imgData = canvas.toDataURL("image/png");
+    //         console.log("imgDataimgData", imgData);
+    //         if (imgData) {
+    //           const result = await Uploads3imagesBase64(imgData);
+    //           console.log("resultresult", result);
+              
+    //           return;
+    //           if (result.status === 200) {
+    //             const payload = {
+    //               certificate: selectedCertificate?.id,
+    //               user: userData?.query?.id,
+    //               status: 1,
+    //               course: selectCourseData?.currentVersion?.mainCourse?.id,
+    //               trainee: selectCourseData?.trainerId?.id,
+    //               trainerCompany: selectCourseData?.trainerCompanyId?.id,
+    //               employee: +selectTrainee,
+    //               certificatePdf: result?.data,
+    //             };
+    //             console.log(
+    //               "🚀 ~ .then ~ payload.selectCourseData:",
+    //               selectCourseData
+    //             );
+
+    //             allocate(payload);
+                
+    //           } else {
+    //             toast({
+    //               description: `Upload failed: ${result.data}`,
+    //               variant: "destructive",
+    //             });
+    //           }
+    //         }
+    //       })
+    //       .catch((error) => {
+    //         console.error("Error capturing canvas:", error);
+    //       });
+    //   }
+    // } catch (error) {
+    //   console.error("Error loading images or capturing canvas:", error);
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   return (
