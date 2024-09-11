@@ -143,14 +143,14 @@ const AllocatedCertificateEmployeePage = () => {
     })
     
     // Create a FileReader to read the blob as a data URL
-    const reader = new FileReader();
+    const reader:any = new FileReader();
     return new Promise((resolve, reject) => {
         reader.onloadend = () => {
             // Extract the Base64 string from the data URL
             const base64String = reader.result.split(',')[1];
             resolve(base64String);
         };
-        reader.onerror = (error) => reject(error);
+        reader.onerror = (error:any) => reject(error);
 
         // Read the blob as a data URL
         reader.readAsDataURL(response.data);
