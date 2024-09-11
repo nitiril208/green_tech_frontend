@@ -19,6 +19,7 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { toast } from "../ui/use-toast";
+import axios from "axios";
 
 const AllocatedCertificateEmployeePage = () => {
   const captureRef = useRef(null);
@@ -132,19 +133,68 @@ const AllocatedCertificateEmployeePage = () => {
   });
   console.log("employeeOptions++++", employeeOptions);
 
+
+  const getBase64Image = async (img:any) => {
+    console.log('`img ++++ 123`', img)
+    const response = await axios.request({
+      url: img,
+      method: 'GET',
+      responseType: 'blob' // Ensure the response is a blob
+    })
+    
+    // Create a FileReader to read the blob as a data URL
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+        reader.onloadend = () => {
+            // Extract the Base64 string from the data URL
+            const base64String = reader.result.split(',')[1];
+            resolve(base64String);
+        };
+        reader.onerror = (error) => reject(error);
+
+        // Read the blob as a data URL
+        reader.readAsDataURL(response.data);
+    });
+
+  }
+  
+
   const handleIssue = async () => {
     setLoading(true);
     const selectCourseData = fetchCourseAllCourseData?.data?.find(
       (item: any) => item?.id?.toString() === selectCourse
     );
-    const loadImage = (url: string) =>
-      new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = url;
-      });
+    // const loadImage = async (url: string) =>
+      // new Promise((resolve, reject) => {
+      //   const img = new Image();
+      //   img.crossOrigin = "Anonymous";
+      //   img.onload = () => resolve(img);
+      //   img.onerror = reject;
+      //   img.src = getBase64Image(url).then();
+      // });
+      // await getBase64Image(url)
+      // const img = document.getElementById('get-sample-data-image');
+
+      // // Create a canvas and draw the image onto it
+      // const canvas = document.createElement('canvas');
+      // const ctx = canvas.getContext('2d');
+
+      // // Ensure the image is fully loaded
+      // if (img.complete) {
+      //     // Set canvas size to image size
+      //     canvas.width = img.naturalWidth;
+      //     canvas.height = img.naturalHeight;
+      //     ctx.drawImage(img, 0, 0);
+
+      //     // Get the Data URL from the canvas
+      //     const dataURL = canvas.toDataURL('image/jpeg'); // Use appropriate MIME type if needed
+      //     const base64String = dataURL.split(',')[1];
+
+      //     // Display the Base64 string
+      //     console.log('base64Stringbase64String + ', base64String)
+      //     document.getElementById('base64Output').value = base64String;
+      // }
+
 
     const images = [
       selectedCertificate?.backgroundImage,
@@ -155,51 +205,100 @@ const AllocatedCertificateEmployeePage = () => {
 
     console.log("imagesimages", images);
     
+    
     try {
-      Promise.all(images.map((url) => loadImage(url as string)));
-      if (captureRef.current) {
-        html2canvas(captureRef.current, {
-          useCORS: true,
-          allowTaint: false,
-          logging: true,
-        })
-          .then(async (canvas) => {
-            const imgData = canvas.toDataURL("image/png");
-            if (imgData) {
-              const result = await Uploads3imagesBase64(imgData);
-              console.log("resultresult", result);
-              
-              return;
-              if (result.status === 200) {
-                const payload = {
-                  certificate: selectedCertificate?.id,
-                  user: userData?.query?.id,
-                  status: 1,
-                  course: selectCourseData?.currentVersion?.mainCourse?.id,
-                  trainee: selectCourseData?.trainerId?.id,
-                  trainerCompany: selectCourseData?.trainerCompanyId?.id,
-                  employee: +selectTrainee,
-                  certificatePdf: result?.data,
-                };
-                console.log(
-                  "🚀 ~ .then ~ payload.selectCourseData:",
-                  selectCourseData
-                );
-
-                allocate(payload);
-                
-              } else {
-                toast({
-                  description: `Upload failed: ${result.data}`,
-                  variant: "destructive",
-                });
-              }
-            }
+      Promise.all(images.map(async(url) => {
+        const data = await getBase64Image(url)
+        console.log('data res' , data)
+      })).then(() => {
+        console.log('test data')
+        if (captureRef.current) {
+          html2canvas(captureRef.current, {
+            useCORS: true,
+            allowTaint: false,
+            logging: true,
           })
-          .catch((error) => {
-            console.error("Error capturing canvas:", error);
-          });
-      }
+            .then(async (canvas) => {
+              const imgData = canvas.toDataURL("image/png");
+              console.log("imgDataimgData", imgData);
+              if (imgData) {
+                const result = await Uploads3imagesBase64(imgData);
+                console.log("resultresult", result);
+                
+                return;
+                if (result.status === 200) {
+                  const payload = {
+                    certificate: selectedCertificate?.id,
+                    user: userData?.query?.id,
+                    status: 1,
+                    course: selectCourseData?.currentVersion?.mainCourse?.id,
+                    trainee: selectCourseData?.trainerId?.id,
+                    trainerCompany: selectCourseData?.trainerCompanyId?.id,
+                    employee: +selectTrainee,
+                    certificatePdf: result?.data,
+                  };
+                  console.log(
+                    "🚀 ~ .then ~ payload.selectCourseData:",
+                    selectCourseData
+                  );
+  
+                  allocate(payload);
+                } else {
+                  toast({
+                    description: `Upload failed: ${result.data}`,
+                    variant: "destructive",
+                  });
+                }
+              }
+            })
+            .catch((error) => {
+              console.error("Error capturing canvas:", error);
+            });
+        }
+      });
+      // if (captureRef.current) {
+      //   html2canvas(captureRef.current, {
+      //     useCORS: true,
+      //     allowTaint: false,
+      //     logging: true,
+      //   })
+      //     .then(async (canvas) => {
+      //       const imgData = canvas.toDataURL("image/png");
+      //       console.log("imgDataimgData", imgData);
+      //       if (imgData) {
+      //         const result = await Uploads3imagesBase64(imgData);
+      //         console.log("resultresult", result);
+              
+      //         return;
+      //         if (result.status === 200) {
+      //           const payload = {
+      //             certificate: selectedCertificate?.id,
+      //             user: userData?.query?.id,
+      //             status: 1,
+      //             course: selectCourseData?.currentVersion?.mainCourse?.id,
+      //             trainee: selectCourseData?.trainerId?.id,
+      //             trainerCompany: selectCourseData?.trainerCompanyId?.id,
+      //             employee: +selectTrainee,
+      //             certificatePdf: result?.data,
+      //           };
+      //           console.log(
+      //             "🚀 ~ .then ~ payload.selectCourseData:",
+      //             selectCourseData
+      //           );
+
+      //           allocate(payload);
+      //         } else {
+      //           toast({
+      //             description: `Upload failed: ${result.data}`,
+      //             variant: "destructive",
+      //           });
+      //         }
+      //       }
+      //     })
+      //     .catch((error) => {
+      //       console.error("Error capturing canvas:", error);
+      //     });
+      // }
     } catch (error) {
       console.error("Error loading images or capturing canvas:", error);
     } finally {
@@ -250,6 +349,10 @@ const AllocatedCertificateEmployeePage = () => {
                         src={selectedCertificate?.backgroundImage}
                         className="object-cover bg-transparent w-full max-h-[700px] h-full"
                         alt="Logo"
+                        id="get-sample-data-image"
+                        onLoad={(e) => {
+                          console.log('image is loaded', e)
+                        }}
                       />
                     </div>
                     <div className="absolute top-1/2 -translate-y-1/2 w-full 2xl:px-20 xl:px-8 md:px-5 px-3">
